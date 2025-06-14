@@ -2,14 +2,22 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from supabase import create_client, Client
 import os
-from datetime import datetime
+from dotenv import load_dotenv  # Add this import
+
+# Load environment variables from .env file (for local development)
+load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
 
-# Supabase configuration
-SUPABASE_URL = os.getenv('https://iiuydndgnvmliwgzhdje.supabase.co')
-SUPABASE_KEY = os.getenv('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlpdXlkbmRnbnZtbGl3Z3poZGplIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0OTg4MTQ2MiwiZXhwIjoyMDY1NDU3NDYyfQ.gcxP59Q8tDcvt_-E9RtOCLI3Cul3wEKW5dMjrzceBdM')
+# Get environment variables with fallback
+SUPABASE_URL = os.environ.get('SUPABASE_URL')
+SUPABASE_KEY = os.environ.get('SUPABASE_KEY')
+
+if not SUPABASE_URL or not SUPABASE_KEY:
+    raise ValueError("Supabase URL and Key must be set in environment variables")
+
+# Initialize Supabase client
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 @app.route('/data', methods=['POST'])
