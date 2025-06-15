@@ -42,7 +42,7 @@ except Exception as e:
 @app.route('/')
 def home():
     return jsonify({
-        "message": "Environmental Monitoring API",
+        "message": "MIRFA Environmental Monitoring API",
         "endpoints": {
             "POST /data": "Submit sensor data",
             "GET /data": "Retrieve sensor data"
@@ -55,22 +55,23 @@ def receive_data():
         # Log incoming request
         client_ip = request.remote_addr
         logger.info(f"Incoming POST from {client_ip}")
-        
+
+        # If no payload rcvd
         data = request.get_json()
         if not data:
             logger.warning("Empty payload received")
             return jsonify({'error': 'No data provided'}), 400
         
-        # Log complete payload
+        # Log complete payload if rcvd
         logger.info(f"Received payload: {data}")
         
-        # Validate required fields
+        # Validate fields
         required_fields = ['temperature', 'humidity', 'dew_point', 'wet_bulb']
         if not all(field in data for field in required_fields):
             logger.warning(f"Missing fields in payload. Received: {list(data.keys())}")
             return jsonify({'error': 'Missing required fields'}), 400
         
-        # Insert data into Supabase
+        # Push data into Supabase
         response = supabase.table('sensor_data').insert({
             'temperature': data['temperature'],
             'humidity': data['humidity'],
@@ -81,7 +82,7 @@ def receive_data():
         logger.info("Data successfully saved to Supabase")
         return jsonify({
             'message': 'Data saved successfully',
-            'received_data': data  # Echo back the received data for confirmation
+            'received_data': data  # Confirm payload rcvd
         }), 200
     
     except Exception as e:
