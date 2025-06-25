@@ -16,7 +16,7 @@
       color: #111827;
     }
     .card-dark {
-      background-color: #374151; /* Slightly lighter for contrast */
+      background-color: #374151;
       color: #e5e7eb;
     }
     .card-light {
@@ -25,6 +25,22 @@
     }
     #weatherChart {
       max-height: 250px;
+    }
+    .warning-card {
+      border-left-width: 4px;
+    }
+    .temp-warning {
+      border-left-color: #ef4444;
+    }
+    .fog-warning {
+      border-left-color: #94a3b8;
+    }
+    .rain-warning {
+      border-left-color: #60a5fa;
+    }
+    .warning-icon {
+      width: 24px;
+      height: 24px;
     }
   </style>
 </head>
@@ -44,6 +60,37 @@
     </header>
 
     <div id="errorMsg" class="hidden p-4 mb-6 rounded-lg border text-sm bg-red-900/50 border-red-400 text-red-200"></div>
+
+    <!-- Weather Condition Warnings -->
+    <div id="weatherWarnings" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 hidden">
+      <div class="warning-card temp-warning p-4 rounded-r-lg shadow-lg flex items-start gap-3">
+        <svg class="warning-icon text-red-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+          <path fill-rule="evenodd" d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003zM12 8.25a.75.75 0 01.75.75v3.75a.75.75 0 01-1.5 0V9a.75.75 0 01.75-.75zm0 8.25a.75.75 0 100-1.5.75.75 0 000 1.5z" clip-rule="evenodd" />
+        </svg>
+        <div>
+          <h3 class="font-semibold">Temperature Alert</h3>
+          <p id="tempWarningText" class="text-sm"></p>
+        </div>
+      </div>
+      <div class="warning-card fog-warning p-4 rounded-r-lg shadow-lg flex items-start gap-3">
+        <svg class="warning-icon text-gray-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+          <path fill-rule="evenodd" d="M4.5 4.5a3 3 0 00-3 3v9a3 3 0 003 3h8.25a3 3 0 003-3v-9a3 3 0 00-3-3H4.5zm3 6a.75.75 0 000 1.5h1.5a.75.75 0 000-1.5H7.5zm-.75 3.75A.75.75 0 017.5 15h1.5a.75.75 0 010 1.5H7.5a.75.75 0 01-.75-.75zm3.75-.75a.75.75 0 000 1.5h1.5a.75.75 0 000-1.5h-1.5z" clip-rule="evenodd" />
+        </svg>
+        <div>
+          <h3 class="font-semibold">Fog Risk</h3>
+          <p id="fogWarningText" class="text-sm"></p>
+        </div>
+      </div>
+      <div class="warning-card rain-warning p-4 rounded-r-lg shadow-lg flex items-start gap-3">
+        <svg class="warning-icon text-blue-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+          <path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zm-2.625 6c-.54 0-.828.419-.936.634a1.96 1.96 0 00-.189.866c0 .298.059.605.189.866.108.215.395.634.936.634.54 0 .828-.419.936-.634.13-.26.189-.568.189-.866 0-.298-.059-.605-.189-.866-.108-.215-.395-.634-.936-.634zm4.314.634c.108-.215.395-.634.936-.634.54 0 .828.419.936.634.13.26.189.568.189.866 0 .298-.059.605-.189.866-.108.215-.395.634-.936.634-.54 0-.828-.419-.936-.634a1.96 1.96 0 01-.189-.866c0-.298.059-.605.189-.866zm2.023 6.828a.75.75 0 10-1.06-1.06 3.75 3.75 0 01-5.304 0 .75.75 0 00-1.06 1.06 5.25 5.25 0 007.424 0z" clip-rule="evenodd" />
+        </svg>
+        <div>
+          <h3 class="font-semibold">Rain Chance</h3>
+          <p id="rainWarningText" class="text-sm"></p>
+        </div>
+      </div>
+    </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
       <div class="card p-6 rounded-xl shadow-lg transition-all" id="tempCard"></div>
@@ -65,13 +112,14 @@
   <script>
     const SUPABASE_URL = 'https://iiuydndgnvmliwgzhdje.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlpdXlkbmRnbnZtbGl3Z3poZGplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk4ODE0NjIsImV4cCI6MjA2NTQ1NzQ2Mn0.UQ0XpTGLh275xqtM5q0n9M_xlKSGxqwrIOo3rQC1gVA';
-    const STALE_DATA_THRESHOLD_MS = 2 * 60 * 1000; // 5 minutes
+    const STALE_DATA_THRESHOLD_MS = 2 * 60 * 1000; // 2 minutes
 
     const themeToggle = document.getElementById('themeToggle');
     const body = document.body;
     const chartWrapper = document.getElementById('chartWrapper');
     const lastUpdated = document.getElementById('lastUpdated');
     const errorBox = document.getElementById('errorMsg');
+    const weatherWarnings = document.getElementById('weatherWarnings');
     const cardIds = ['tempCard', 'humidityCard', 'dewCard', 'wetBulbCard'];
 
     let darkMode = localStorage.getItem('theme') !== 'light';
@@ -107,6 +155,51 @@
       setTheme();
     });
 
+    function evaluateWeatherConditions(data) {
+      const latest = data[data.length - 1];
+      if (!latest) return;
+      
+      const warnings = {
+        temp: false,
+        fog: false,
+        rain: false
+      };
+      
+      // Temperature warnings
+      if (latest.temperature >= 36) {
+        document.getElementById('tempWarningText').textContent = `High temperature warning (${latest.temperature.toFixed(1)}°C) - Heat risk`;
+        warnings.temp = true;
+      } else if (latest.temperature <= 18) {
+        document.getElementById('tempWarningText').textContent = `Low temperature warning (${latest.temperature.toFixed(1)}°C) - Wear your Jackets`;
+        warnings.temp = true;
+      }
+      
+      // Fog risk evaluation (when dew point spread is < 2.5°C and humidity > 80%)
+      if (latest.humidity > 80 && (latest.temperature - latest.dew_point) < 2.5) {
+        document.getElementById('fogWarningText').textContent = `High fog risk (Humidity: ${latest.humidity.toFixed(1)}%, Dew spread: ${(latest.temperature - latest.dew_point).toFixed(1)}°C)`;
+        warnings.fog = true;
+      }
+      
+      // Rain chance evaluation (when humidity > 85% and temperature > dew point)
+      if (latest.humidity > 85 && latest.temperature > latest.dew_point) {
+        const rainProbability = Math.min(100, Math.round((latest.humidity - 85) * 4));
+        document.getElementById('rainWarningText').textContent = `${rainProbability}% chance of rain (Humidity: ${latest.humidity.toFixed(1)}%)`;
+        warnings.rain = true;
+      }
+      
+      // Show/hide warnings container based on whether any warnings exist
+      if (warnings.temp || warnings.fog || warnings.rain) {
+        weatherWarnings.classList.remove('hidden');
+        
+        // Hide individual warnings that aren't relevant
+        document.querySelector('.temp-warning').style.display = warnings.temp ? 'flex' : 'none';
+        document.querySelector('.fog-warning').style.display = warnings.fog ? 'flex' : 'none';
+        document.querySelector('.rain-warning').style.display = warnings.rain ? 'flex' : 'none';
+      } else {
+        weatherWarnings.classList.add('hidden');
+      }
+    }
+
     async function fetchSensorData() {
       try {
         const res = await fetch(`${SUPABASE_URL}/rest/v1/sensor_data?select=*&order=created_at.desc&limit=50`, {
@@ -123,15 +216,12 @@
             throw new Error('No sensor data available from the source.');
         }
 
-        // --- FIXED STALE DATA CHECK ---
         const latestRecord = data[0];
         if (!latestRecord || !latestRecord.created_at) {
           throw new Error("Received data is missing a valid timestamp.");
         }
         
         let createdAt = latestRecord.created_at;
-        // If the timestamp from the DB doesn't have timezone info, add 'Z' to treat it as UTC.
-        // This prevents the browser from assuming it's a local time.
         if (!createdAt.endsWith('Z') && !createdAt.includes('+')) {
           createdAt += 'Z';
         }
@@ -146,17 +236,20 @@
         if (currentTime - recordTime > STALE_DATA_THRESHOLD_MS) {
             errorBox.textContent = '⚠️ No Data Received: The sensor has not sent new data in over 2 minutes.';
             errorBox.classList.remove('hidden');
-            updateDashboard([]); // Clear dashboard with empty data
+            updateDashboard([]);
             return; 
         }
 
         errorBox.classList.add('hidden');
-        updateDashboard(data.reverse()); // Reverse for chronological chart display
+        const chronologicalData = data.reverse();
+        updateDashboard(chronologicalData);
+        evaluateWeatherConditions(chronologicalData);
         lastUpdated.textContent = 'Last updated: ' + new Date().toLocaleString();
       } catch (err) {
         errorBox.textContent = `⚠️ ${err.message}`;
         errorBox.classList.remove('hidden');
-        updateDashboard([]); // Clear dashboard on error
+        updateDashboard([]);
+        weatherWarnings.classList.add('hidden');
       }
     }
 
@@ -171,49 +264,51 @@
       const ctx = document.getElementById('weatherChart').getContext('2d');
       if (window.myChart) window.myChart.destroy();
 
-      window.myChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: data.map(d => new Date(d.created_at).toLocaleTimeString()),
-          datasets: [
-            {
-              label: 'Temperature (°C)',
-              data: data.map(d => d.temperature),
-              borderColor: '#f87171',
-              backgroundColor: 'rgba(248,113,113,0.2)',
-              tension: 0.4,
-            },
-            {
-              label: 'Humidity (%)',
-              data: data.map(d => d.humidity),
-              borderColor: '#60a5fa',
-              backgroundColor: 'rgba(96,165,250,0.2)',
-              tension: 0.4,
-              yAxisID: 'y1',
-            },
-          ]
-        },
-        options: {
-          responsive: true,
-          interaction: { mode: 'index', intersect: false },
-          maintainAspectRatio: false,
-          scales: {
-            y: {
-              type: 'linear',
-              position: 'left',
-              title: { display: true, text: 'Temperature (°C)' },
-            },
-            y1: {
-              type: 'linear',
-              position: 'right',
-              grid: { drawOnChartArea: false },
-              min: 0,
-              max: 100,
-              title: { display: true, text: 'Humidity (%)' },
+      if (data.length > 0) {
+        window.myChart = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: data.map(d => new Date(d.created_at).toLocaleTimeString()),
+            datasets: [
+              {
+                label: 'Temperature (°C)',
+                data: data.map(d => d.temperature),
+                borderColor: '#f87171',
+                backgroundColor: 'rgba(248,113,113,0.2)',
+                tension: 0.4,
+              },
+              {
+                label: 'Humidity (%)',
+                data: data.map(d => d.humidity),
+                borderColor: '#60a5fa',
+                backgroundColor: 'rgba(96,165,250,0.2)',
+                tension: 0.4,
+                yAxisID: 'y1',
+              },
+            ]
+          },
+          options: {
+            responsive: true,
+            interaction: { mode: 'index', intersect: false },
+            maintainAspectRatio: false,
+            scales: {
+              y: {
+                type: 'linear',
+                position: 'left',
+                title: { display: true, text: 'Temperature (°C)' },
+              },
+              y1: {
+                type: 'linear',
+                position: 'right',
+                grid: { drawOnChartArea: false },
+                min: 0,
+                max: 100,
+                title: { display: true, text: 'Humidity (%)' },
+              },
             },
           },
-        },
-      });
+        });
+      }
     }
 
     function cardHtml(title, value, unit) {
