@@ -7,41 +7,16 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    .dark-mode {
-      background-color: #1f2937;
-      color: white;
-    }
-    .light-mode {
-      background-color: #f9fafb;
-      color: #111827;
-    }
-    .card-dark {
-      background-color: #374151;
-      color: #e5e7eb;
-    }
-    .card-light {
-      background-color: #ffffff;
-      color: #111827;
-    }
-    #weatherChart {
-      max-height: 250px;
-    }
-    .warning-card {
-      border-left-width: 4px;
-    }
-    .temp-warning {
-      border-left-color: #ef4444;
-    }
-    .fog-warning {
-      border-left-color: #94a3b8;
-    }
-    .rain-warning {
-      border-left-color: #60a5fa;
-    }
-    .warning-icon {
-      width: 24px;
-      height: 24px;
-    }
+    .dark-mode { background-color: #1f2937; color: white; }
+    .light-mode { background-color: #f9fafb; color: #111827; }
+    .card-dark { background-color: #374151; color: #e5e7eb; }
+    .card-light { background-color: #ffffff; color: #111827; }
+    #weatherChart { max-height: 250px; }
+    .warning-card { border-left-width: 4px; }
+    .temp-warning { border-left-color: #ef4444; }
+    .fog-warning { border-left-color: #94a3b8; }
+    .rain-warning { border-left-color: #60a5fa; }
+    .warning-icon { width: 24px; height: 24px; }
   </style>
 </head>
 <body class="transition-colors duration-300 min-h-screen px-4 py-8">
@@ -51,9 +26,9 @@
       <div class="flex items-center gap-3">
         <span class="text-lg">LIGHT</span>
         <label for="themeToggle" class="relative inline-flex items-center cursor-pointer">
-            <input type="checkbox" id="themeToggle" class="sr-only peer">
-            <div class="w-14 h-7 bg-gray-200 rounded-full peer dark:bg-gray-600 peer-focus:outline-none peer-checked:bg-blue-600"></div>
-            <span class="absolute top-1 left-1 w-5 h-5 bg-white rounded-full transition-transform peer-checked:translate-x-7"></span>
+          <input type="checkbox" id="themeToggle" class="sr-only peer">
+          <div class="w-14 h-7 bg-gray-200 rounded-full peer dark:bg-gray-600 peer-focus:outline-none peer-checked:bg-blue-600"></div>
+          <span class="absolute top-1 left-1 w-5 h-5 bg-white rounded-full transition-transform peer-checked:translate-x-7"></span>
         </label>
         <span class="text-lg">DARK</span>
       </div>
@@ -110,8 +85,7 @@
   </div>
 
   <script>
-    const SUPABASE_URL = 'https://iiuydndgnvmliwgzhdje.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlpdXlkbmRnbnZtbGl3Z3poZGplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk4ODE0NjIsImV4cCI6MjA2NTQ1NzQ2Mn0.UQ0XpTGLh275xqtM5q0n9M_xlKSGxqwrIOo3rQC1gVA';
+    const API_URL = "https://esp32-api-2j8g.onrender.com"; // Flask backend
     const STALE_DATA_THRESHOLD_MS = 2 * 60 * 1000; // 2 minutes
 
     const themeToggle = document.getElementById('themeToggle');
@@ -132,9 +106,9 @@
         chartWrapper.className = 'p-6 rounded-xl shadow-lg mb-8 bg-gray-800 text-white';
         lastUpdated.className = 'text-sm text-gray-400';
         cardIds.forEach(id => {
-            const el = document.getElementById(id);
-            el.classList.add('card-dark');
-            el.classList.remove('card-light');
+          const el = document.getElementById(id);
+          el.classList.add('card-dark');
+          el.classList.remove('card-light');
         });
       } else {
         body.classList.remove('dark-mode');
@@ -142,9 +116,9 @@
         chartWrapper.className = 'p-6 rounded-xl shadow-lg mb-8 bg-white text-gray-900';
         lastUpdated.className = 'text-sm text-gray-600';
         cardIds.forEach(id => {
-            const el = document.getElementById(id);
-            el.classList.add('card-light');
-            el.classList.remove('card-dark');
+          const el = document.getElementById(id);
+          el.classList.add('card-light');
+          el.classList.remove('card-dark');
         });
       }
       localStorage.setItem('theme', darkMode ? 'dark' : 'light');
@@ -158,14 +132,9 @@
     function evaluateWeatherConditions(data) {
       const latest = data[data.length - 1];
       if (!latest) return;
-      
-      const warnings = {
-        temp: false,
-        fog: false,
-        rain: false
-      };
-      
-      // Temperature warnings
+
+      const warnings = { temp: false, fog: false, rain: false };
+
       if (latest.temperature >= 36) {
         document.getElementById('tempWarningText').textContent = `High temperature warning (${latest.temperature.toFixed(1)}°C) - Heat risk`;
         warnings.temp = true;
@@ -173,25 +142,20 @@
         document.getElementById('tempWarningText').textContent = `Low temperature warning (${latest.temperature.toFixed(1)}°C) - Wear your Jackets`;
         warnings.temp = true;
       }
-      
-      // Fog risk evaluation (when dew point spread is < 2.5°C and humidity > 80%)
+
       if (latest.humidity > 80 && (latest.temperature - latest.dew_point) < 2.5) {
         document.getElementById('fogWarningText').textContent = `High fog risk (Humidity: ${latest.humidity.toFixed(1)}%, Dew spread: ${(latest.temperature - latest.dew_point).toFixed(1)}°C)`;
         warnings.fog = true;
       }
-      
-      // Rain chance evaluation (when humidity > 85% and temperature > dew point)
+
       if (latest.humidity > 85 && latest.temperature > latest.dew_point) {
         const rainProbability = Math.min(100, Math.round((latest.humidity - 85) * 4));
         document.getElementById('rainWarningText').textContent = `${rainProbability}% chance of rain (Humidity: ${latest.humidity.toFixed(1)}%)`;
         warnings.rain = true;
       }
-      
-      // Show/hide warnings container based on whether any warnings exist
+
       if (warnings.temp || warnings.fog || warnings.rain) {
         weatherWarnings.classList.remove('hidden');
-        
-        // Hide individual warnings that aren't relevant
         document.querySelector('.temp-warning').style.display = warnings.temp ? 'flex' : 'none';
         document.querySelector('.fog-warning').style.display = warnings.fog ? 'flex' : 'none';
         document.querySelector('.rain-warning').style.display = warnings.rain ? 'flex' : 'none';
@@ -202,48 +166,34 @@
 
     async function fetchSensorData() {
       try {
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/sensor_data?select=*&order=created_at.desc&limit=50`, {
-          headers: {
-            apikey: SUPABASE_KEY,
-            Authorization: `Bearer ${SUPABASE_KEY}`,
-          },
-        });
-
+        const res = await fetch(`${API_URL}/data`);
         if (!res.ok) throw new Error(`Failed to fetch data: ${res.statusText}`);
 
-        const data = await res.json();
+        const json = await res.json();
+        const data = json.data || [];
+
         if (!Array.isArray(data) || data.length === 0) {
-            throw new Error('No sensor data available from the source.');
+          throw new Error('No sensor data available from the API.');
         }
 
-        const latestRecord = data[0];
+        const latestRecord = data[data.length - 1];
         if (!latestRecord || !latestRecord.created_at) {
           throw new Error("Received data is missing a valid timestamp.");
         }
-        
-        let createdAt = latestRecord.created_at;
-        if (!createdAt.endsWith('Z') && !createdAt.includes('+')) {
-          createdAt += 'Z';
-        }
-        
-        const recordTime = new Date(createdAt).getTime();
+
+        const recordTime = new Date(latestRecord.created_at).getTime();
         const currentTime = new Date().getTime();
 
-        if (isNaN(recordTime)) {
-            throw new Error(`Could not parse the sensor timestamp: ${latestRecord.created_at}`);
-        }
-
         if (currentTime - recordTime > STALE_DATA_THRESHOLD_MS) {
-            errorBox.textContent = '⚠️ No Data Received: The sensor has not sent new data in over 2 minutes.';
-            errorBox.classList.remove('hidden');
-            updateDashboard([]);
-            return; 
+          errorBox.textContent = '⚠️ No Data Received: The sensor has not sent new data in over 2 minutes.';
+          errorBox.classList.remove('hidden');
+          updateDashboard([]);
+          return;
         }
 
         errorBox.classList.add('hidden');
-        const chronologicalData = data.reverse();
-        updateDashboard(chronologicalData);
-        evaluateWeatherConditions(chronologicalData);
+        updateDashboard(data);
+        evaluateWeatherConditions(data);
         lastUpdated.textContent = 'Last updated: ' + new Date().toLocaleString();
       } catch (err) {
         errorBox.textContent = `⚠️ ${err.message}`;
@@ -313,16 +263,15 @@
 
     function cardHtml(title, value, unit) {
       return `
-          <div class="flex justify-between items-start">
-            <div>
-              <h3 class="text-lg">${title}</h3>
-              <p class="text-3xl font-bold mt-2">${value?.toFixed?.(1) ?? '---'}<span class="text-lg ml-1">${unit}</span></p>
-            </div>
+        <div class="flex justify-between items-start">
+          <div>
+            <h3 class="text-lg">${title}</h3>
+            <p class="text-3xl font-bold mt-2">${value?.toFixed?.(1) ?? '---'}<span class="text-lg ml-1">${unit}</span></p>
           </div>
+        </div>
       `;
     }
 
-    // Initial setup calls
     setTheme();
     fetchSensorData();
     setInterval(fetchSensorData, 15000);
