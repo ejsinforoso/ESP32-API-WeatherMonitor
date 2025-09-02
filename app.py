@@ -18,14 +18,16 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
+
+# 🔒 CORS: Allow only your GitHub Pages frontend
+# Replace YOUR_GITHUB_USERNAME and REPO with your actual values
 CORS(app, resources={
-    r"/data": {"origins": "*"},
-    r"/*": {"origins": ""}
+    r"/*": {"origins": "https://ejsinforoso.github.io"}
 })
 
 # Get environment variables
-SUPABASE_URL = os.environ.get('SUPABASE_URL')
-SUPABASE_KEY = os.environ.get('SUPABASE_KEY')
+SUPABASE_URL = os.environ.get('https://iiuydndgnvmliwgzhdje.supabase.co')
+SUPABASE_KEY = os.environ.get('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlpdXlkbmRnbnZtbGl3Z3poZGplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk4ODE0NjIsImV4cCI6MjA2NTQ1NzQ2Mn0.UQ0XpTGLh275xqtM5q0n9M_xlKSGxqwrIOo3rQC1gVA')
 
 if not SUPABASE_URL or not SUPABASE_KEY:
     logger.error("Supabase credentials not configured")
@@ -52,26 +54,21 @@ def home():
 @app.route('/data', methods=['POST'])
 def receive_data():
     try:
-        # Log incoming request
         client_ip = request.remote_addr
         logger.info(f"Incoming POST from {client_ip}")
 
-        # If no payload rcvd
         data = request.get_json()
         if not data:
             logger.warning("Empty payload received")
             return jsonify({'error': 'No data provided'}), 400
         
-        # Log complete payload if rcvd
         logger.info(f"Received payload: {data}")
         
-        # Validate fields
         required_fields = ['temperature', 'humidity', 'dew_point', 'wet_bulb']
         if not all(field in data for field in required_fields):
             logger.warning(f"Missing fields in payload. Received: {list(data.keys())}")
             return jsonify({'error': 'Missing required fields'}), 400
         
-        # Push data into Supabase
         response = supabase.table('sensor_data').insert({
             'temperature': data['temperature'],
             'humidity': data['humidity'],
@@ -82,7 +79,7 @@ def receive_data():
         logger.info("Data successfully saved to Supabase")
         return jsonify({
             'message': 'Data saved successfully',
-            'received_data': data  # Confirm payload rcvd
+            'received_data': data
         }), 200
     
     except Exception as e:
@@ -97,7 +94,6 @@ def get_data():
     try:
         logger.info("Processing GET request for sensor data")
         
-        # Get the last 100 records
         response = supabase.from_('sensor_data') \
                          .select('*') \
                          .order('created_at', desc=True) \
@@ -108,7 +104,6 @@ def get_data():
             logger.info("No data found in database")
             return jsonify({'message': 'No data available'}), 200
         
-        # Return data in chronological order
         reversed_data = list(reversed(response.data))
         logger.info(f"Returning {len(reversed_data)} records")
         return jsonify({'data': reversed_data}), 200
